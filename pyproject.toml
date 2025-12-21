@@ -1,0 +1,19 @@
+[project]
+name = "fastapolms"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "gurpreet",email = "gurp3773@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "uvicorn (>=0.38.0,<0.39.0)",
+    "fastapi (>=0.126.0,<0.127.0)",
+    "pydantic (>=2.12.5,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
