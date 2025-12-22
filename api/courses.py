@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+import fastapi
 from pydantic import BaseModel
 from typing import Optional
 
@@ -12,18 +12,18 @@ async def read_courses():
 async def create_course_api():
     return {"courses": []}
 
-@router.get("/courses/:id")
+@router.get("/courses/:{id}")
 async def read_course():
     return {"courses": []}
 
-@router.patch("/courses/:id")
+@router.patch("/courses/:{id}")
 async def update_course():
     return {"courses": []}
 
-@router.delete("/courses/:id")
+@router.delete("/courses/:{id}")
 async def delete_course():
     return {"courses": []}
 
-@router.get("/courses/:id/sections")
+@router.get("/courses/:{id}/sections")
 async def read_course_sections():
     return {"courses": []}

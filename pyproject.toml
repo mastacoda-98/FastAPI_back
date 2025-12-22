@@ -10,7 +10,11 @@ requires-python = ">=3.12"
 dependencies = [
     "uvicorn (>=0.38.0,<0.39.0)",
     "fastapi (>=0.126.0,<0.127.0)",
-    "pydantic (>=2.12.5,<3.0.0)"
+    "pydantic (>=2.12.5,<3.0.0)",
+    "sqlalchemy (>=2.0.45,<3.0.0)",
+    "psycopg2-binary (>=2.9.11,<3.0.0)",
+    "sqlalchemy-utils (>=0.42.1,<0.43.0)",
+    "alembic (>=1.17.2,<2.0.0)"
 ]
 
 

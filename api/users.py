@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+import fastapi
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
+
+app = fastapi.FastAPI()
 router = fastapi.APIRouter()
 
 users = []
