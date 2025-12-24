@@ -21,6 +21,7 @@ class User(Base, TimestampMixin):
     profile = relationship("Profile", uselist=False, back_populates="user")
     student_courses = relationship("StudentCourse", back_populates="student")
     completed_content = relationship("CompletedCourse", back_populates="student")
+    is_active = Column(Boolean, default=True, nullable=False)
 
 class Profile(Base, TimestampMixin):
     __tablename__ = "profiles"
@@ -30,6 +31,5 @@ class Profile(Base, TimestampMixin):
     first_name = Column(String(50), nullable=True)
     last_name = Column(String(50), nullable=True)
     bio = Column(Text, nullable=True)
-    is_active = Column(Boolean, default=True)
 
     user = relationship("User", back_populates="profile")
