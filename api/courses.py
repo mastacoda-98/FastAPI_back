@@ -21,15 +21,17 @@ async def create_course_api(course: CourseCreate, db: AsyncSession = Depends(get
     return db_course
 
 
-@router.get("/course/:{id}")
-async def read_course(db: AsyncSession = Depends(get_async_db)):
+@router.get("/course/{id}")
+async def read_course(id: int,db: AsyncSession = Depends(get_async_db)):
     course = await get_course(db, id)
+    if course is None:
+        raise fastapi.HTTPException(status_code=404, detail="Course not found")
     return course
 
 
-@router.patch("/courses/:{id}")
-async def update_course():
-    return {"courses": []}
+# @router.patch("/courses/{id}")
+# async def update_course():
+#     return {"courses": []}
 
 # @router.delete("/courses/:{id}")
 # async def delete_course():

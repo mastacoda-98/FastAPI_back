@@ -1,0 +1,22 @@
+# Virtual environments
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+
+# Editor configs
+.vscode/
+.idea/
+
+# Environment file
+.env
+
+# Alembic versions (already tracked but ignore compiled files)
+alembic/versions/__pycache__/
+
+# MacOS
+.DS_Store

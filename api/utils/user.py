@@ -1,9 +1,19 @@
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from db.models.user import User
 from pydantic_schemas.user import UserCreate
+from passlib.context import CryptContext
 
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def hash_password(plain_password: str) -> str:
+    return pwd_context.hash(plain_password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
 async def get_user(db: AsyncSession, user_id: int):
     query = select(User).where(User.id == user_id)
@@ -24,8 +34,10 @@ async def get_users(db: AsyncSession, skip: int = 0, limit: int = 100):
 
 
 async def create_user(db: AsyncSession, user: UserCreate):
-    db_user = User(email=user.email, role=user.role)
+    hashed = hash_password(user.password)
+    db_user = User(email=user.email, role=user.role, password=hashed)
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)
     return db_user
+
