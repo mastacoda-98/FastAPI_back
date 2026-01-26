@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -12,9 +12,20 @@ async def get_course(db: AsyncSession, course_id: int):
     return result.scalar_one_or_none()
 
 async def get_courses(db: AsyncSession):
-    query = select(Course)
+    from db.models.user import Profile
+    query = select(Course).options(selectinload(Course.creator).selectinload(Profile))
     result = await db.execute(query)
-    return result.scalars().all()
+    courses = result.scalars().all()
+    
+    for course in courses:
+        count_query = select(func.count(StudentCourse.id)).where(
+            (StudentCourse.course_id == course.id) & 
+            (StudentCourse.status.in_([EnrollmentStatus.approved, EnrollmentStatus.direct]))
+        )
+        count_result = await db.execute(count_query)
+        course.enrolled_students_count = count_result.scalar() or 0
+    
+    return courses
 
 async def get_user_courses(db: AsyncSession, user_id: int):
     query = select(Course).where(Course.user_id == user_id)

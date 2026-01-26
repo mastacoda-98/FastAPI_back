@@ -19,7 +19,6 @@ export default function UsersPage() {
         const response = await api.get("/users?skip=0&limit=100");
         const allUsers = response.data;
 
-        // Filter users by profile name or email based on search query
         if (query.trim()) {
           const filtered = allUsers.filter((user) => {
             const profileName = user.profile_name || "";

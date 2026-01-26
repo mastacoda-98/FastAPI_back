@@ -25,10 +25,35 @@ class CourseUpdate(BaseModel):
     description: Optional[str] = None
 
 
+class TeacherInfo(BaseModel):
+    id: int
+    email: str
+    profile_name: Optional[str] = None
+    
+    class Config:
+        orm_mode = True
+
+    @classmethod
+    def from_orm(cls, obj):
+        profile_name = None
+        if obj.profile:
+            first_name = obj.profile.first_name or ""
+            last_name = obj.profile.last_name or ""
+            profile_name = f"{first_name} {last_name}".strip()
+        
+        return cls(
+            id=obj.id,
+            email=obj.email,
+            profile_name=profile_name or None
+        )
+
+
 class CourseResponse(CoursesBase):
     id: int
     user_id: int
     created_at: datetime
+    creator: Optional[TeacherInfo] = None
+    enrolled_students_count: int = 0
 
     class Config:
         orm_mode = True

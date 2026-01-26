@@ -62,8 +62,10 @@ async def get_user_dashboard(db: AsyncSession, user):
     from sqlalchemy import select as sql_select
     
     profile_name = ""
+    profile_bio = None
     if user.profile:
         profile_name = f"{user.profile.first_name or ''} {user.profile.last_name or ''}".strip()
+        profile_bio = user.profile.bio
     
     role_str = "teacher" if user.role == Role.teacher else "student"
     
@@ -72,6 +74,7 @@ async def get_user_dashboard(db: AsyncSession, user):
         "email": user.email,
         "role": role_str,
         "profile_name": profile_name,
+        "bio": profile_bio,
         "created_at": user.created_at,
     }
     
