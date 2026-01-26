@@ -1,0 +1,63 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from db.models.course import Course, StudentCourse, EnrollmentStatus, Section, Content, Assignment
+from pydantic_schemas.course import CourseCreate
+
+
+async def get_course(db: AsyncSession, course_id: int):
+    query = select(Course).where(Course.id == course_id)
+    result = await db.execute(query)
+    return result.scalar_one_or_none()
+
+async def get_courses(db: AsyncSession):
+    query = select(Course)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+async def get_user_courses(db: AsyncSession, user_id: int):
+    query = select(Course).where(Course.user_id == user_id)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+async def create_course(db: AsyncSession, course: CourseCreate, teacher_id: int):
+    db_course = Course(
+        title=course.title,
+        description=course.description,
+        user_id=teacher_id
+    )
+    db.add(db_course)
+    await db.commit()
+    await db.refresh(db_course)
+    return db_course
+
+
+async def get_course_with_details(db: AsyncSession, course_id: int):
+    """
+    Get course with all nested details: sections, contents, and assignments.
+    Uses eager loading to fetch all related data in efficient queries.
+    """
+    query = select(Course).where(Course.id == course_id).options(
+        selectinload(Course.sections).selectinload(Section.contents).selectinload(Content.type),
+        selectinload(Course.assignments)
+    )
+    result = await db.execute(query)
+    course = result.unique().scalar_one_or_none()
+    return course
+
+
+async def check_enrollment(db: AsyncSession, student_id: int, course_id: int):
+    """
+    Check if a student is enrolled in a course.
+    Returns the StudentCourse object if enrolled (approved or direct status).
+    Returns None if not enrolled or enrollment is pending/rejected.
+    """
+    query = select(StudentCourse).where(
+        (StudentCourse.student_id == student_id) &
+        (StudentCourse.course_id == course_id) &
+        (StudentCourse.status.in_([EnrollmentStatus.approved, EnrollmentStatus.direct]))
+    )
+    result = await db.execute(query)
+    enrollment = result.scalar_one_or_none()
+    return enrollment
