@@ -1,14 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import asyncio
 
 from api import users, courses, sections, auth, assignments
 
-from db.db_setup import engine, Base
+from db.db_setup import async_engine, Base
 from db.models import user, course
 
 
-user.Base.metadata.create_all(bind=engine)
-course.Base.metadata.create_all(bind=engine)
+async def create_tables():
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+asyncio.run(create_tables())
 
 
 app = FastAPI()

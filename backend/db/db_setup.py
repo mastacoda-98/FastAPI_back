@@ -14,14 +14,23 @@ except Exception:
     pass
 
 # Read DB URLs from environment (set these in your .env or shell)
-SQLALCHEMY_DATABASE_URL = os.getenv(
+DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql+psycopg2://postgres:postgres@localhost/postgres",
 )
-ASYNC_SQLALCHEMY_DATABASE_URL = os.getenv(
-    "ASYNC_DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost/postgres",
-)
+
+# Convert sync URL to async URL for asyncpg
+if "postgresql://" in DATABASE_URL:
+    ASYNC_SQLALCHEMY_DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+elif "postgresql+psycopg2://" in DATABASE_URL:
+    ASYNC_SQLALCHEMY_DATABASE_URL = DATABASE_URL.replace("postgresql+psycopg2://", "postgresql+asyncpg://")
+else:
+    ASYNC_SQLALCHEMY_DATABASE_URL = os.getenv(
+        "ASYNC_DATABASE_URL",
+        "postgresql+asyncpg://postgres:postgres@localhost/postgres",
+    )
+
+SQLALCHEMY_DATABASE_URL = DATABASE_URL
 
 
 # synchronous engine / session (used by Alembic and any sync code)
