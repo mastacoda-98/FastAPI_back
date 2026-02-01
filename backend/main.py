@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import asyncio
+from contextlib import asynccontextmanager
 
 from api import users, courses, sections, auth, assignments
 
@@ -13,10 +13,16 @@ async def create_tables():
         await conn.run_sync(Base.metadata.create_all)
 
 
-asyncio.run(create_tables())
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: create tables
+    await create_tables()
+    yield
+    # Shutdown: close engine
+    await async_engine.dispose()
 
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
