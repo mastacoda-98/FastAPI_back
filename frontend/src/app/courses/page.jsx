@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import api from "@/lib/api";
 
-export default function CoursesPage() {
+function CoursesContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
   const [courses, setCourses] = useState([]);
@@ -120,5 +120,13 @@ export default function CoursesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CoursesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-stone-50 py-8">Loading...</div>}>
+      <CoursesContent />
+    </Suspense>
   );
 }
