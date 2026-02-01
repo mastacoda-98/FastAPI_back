@@ -3,11 +3,17 @@
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import SearchBar from "./SearchBar";
 
 export default function Navbar() {
   const { isLoggedIn, logout } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-orange-400 text-white shadow-lg z-50">
@@ -22,7 +28,7 @@ export default function Navbar() {
         <SearchBar />
 
         <div className="space-x-3">
-          {isLoggedIn ? (
+          {mounted && isLoggedIn ? (
             <button
               onClick={() => {
                 logout();
@@ -32,7 +38,7 @@ export default function Navbar() {
             >
               Sign Out
             </button>
-          ) : (
+          ) : mounted ? (
             <>
               <Link
                 href="/auth/login"
@@ -47,7 +53,7 @@ export default function Navbar() {
                 Sign Up
               </Link>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </nav>

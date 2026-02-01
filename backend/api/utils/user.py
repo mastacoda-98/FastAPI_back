@@ -124,14 +124,30 @@ async def get_user_dashboard(db: AsyncSession, user):
         
         pending_list = []
         for enrollment in pending_enrollments:
-            student = await db.get(User, enrollment.student_id)
-            course = await db.get(Course, enrollment.course_id)
-            pending_list.append({
-                "enrollment_id": enrollment.id,
-                "student_email": student.email,
-                "course_title": course.title,
-                "requested_at": enrollment.created_at
-            })
+            # Eager load user and profile using select with joinedload
+            student_result = await db.execute(
+                sql_select(User).where(User.id == enrollment.student_id).options(joinedload(User.profile))
+            )
+            student = student_result.scalar_one_or_none()
+            
+            course_result = await db.execute(
+                sql_select(Course).where(Course.id == enrollment.course_id)
+            )
+            course = course_result.scalar_one_or_none()
+            
+            student_name = ""
+            if student and student.profile:
+                student_name = f"{student.profile.first_name or ''} {student.profile.last_name or ''}".strip()
+            
+            if student and course:
+                pending_list.append({
+                    "enrollment_id": enrollment.id,
+                    "student_id": student.id,
+                    "student_email": student.email,
+                    "student_name": student_name if student_name else student.email,
+                    "course_title": course.title,
+                    "requested_at": enrollment.created_at
+                })
         
         dashboard.update({
             "courses_created": courses_info,
@@ -155,10 +171,15 @@ async def get_user_dashboard(db: AsyncSession, user):
         
         for enrollment in approved_enrollments:
             course = await db.get(Course, enrollment.course_id)
-            teacher = await db.get(User, course.user_id)
+            
+            # Eager load teacher with profile using select and joinedload
+            teacher_result = await db.execute(
+                sql_select(User).where(User.id == course.user_id).options(joinedload(User.profile))
+            )
+            teacher = teacher_result.scalar_one_or_none()
             
             teacher_name = ""
-            if teacher.profile:
+            if teacher and teacher.profile:
                 teacher_name = f"{teacher.profile.first_name or ''} {teacher.profile.last_name or ''}".strip()
             
             assignments_result = await db.execute(
@@ -193,7 +214,7 @@ async def get_user_dashboard(db: AsyncSession, user):
                 "title": course.title,
                 "description": course.description,
                 "teacher_name": teacher_name,
-                "teacher_email": teacher.email,
+                "teacher_email": teacher.email if teacher else "",
                 "status": enrollment.status,
                 "completed": enrollment.completed,
                 "completion_percentage": completion_percentage,

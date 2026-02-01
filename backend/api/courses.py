@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, status
 from pydantic_schemas.course import CourseCreate, CourseResponse, EnrollmentApprovalRequest, CourseDetailResponse
 from auth.dependencies import get_teacher_user, get_student_user, get_current_user_optional
 from api.utils.course import get_courses, create_course, get_course, get_course_with_details, check_enrollment
-from api.utils.user import enroll_student_util, request_enrollment_util, approve_enrollment_util
+from api.utils.user import request_enrollment_util, approve_enrollment_util
 from db.models.course import Course, StudentCourse
 from db.models.user import User
 
@@ -26,18 +26,6 @@ async def create_course_teacher(
     return db_course
 
 
-@router.post("/course/{course_id}/enroll-student/{student_id}", tags=["teacher"])
-async def teacher_enroll_student(
-    course_id: int,
-    student_id: int,
-    db: AsyncSession = Depends(get_async_db),
-    teacher = Depends(get_teacher_user)
-):
-    """Teacher directly enrolls a student to their course"""
-    enrollment = await enroll_student_util(db, teacher.id, course_id, student_id)
-    return {"message": "Student enrolled successfully", "enrollment": enrollment}
-
-
 @router.patch("/enrollment/{enrollment_id}/approve", tags=["teacher"])
 async def approve_enrollment(
     enrollment_id: int,
@@ -52,14 +40,14 @@ async def approve_enrollment(
 
 # =============== STUDENT ENDPOINTS ===============
 
-@router.get("/courses", response_model=List[CourseResponse], tags=["public"])
+@router.get("", response_model=List[CourseResponse], tags=["public"])
 async def read_all_courses(db: AsyncSession = Depends(get_async_db)):
     """View all available courses"""
     courses = await get_courses(db)
     return courses
 
 
-@router.get("/course/{id}", response_model=CourseDetailResponse, tags=["public"])
+@router.get("/{id}", response_model=CourseDetailResponse, tags=["public"])
 async def read_course(
     id: int, 
     db: AsyncSession = Depends(get_async_db),
@@ -84,6 +72,19 @@ async def read_course(
             is_enrolled = True
             enrollment_status = enrollment.status.value
     
+    # Calculate creator profile name
+    creator = None
+    if db_course.creator:
+        profile = db_course.creator.profile
+        first_name = profile.first_name or "" if profile else ""
+        last_name = profile.last_name or "" if profile else ""
+        profile_name = f"{first_name} {last_name}".strip() or None
+        creator = {
+            "id": db_course.creator.id,
+            "email": db_course.creator.email,
+            "profile_name": profile_name
+        }
+    
     # Convert to response dict
     response_data = {
         "id": db_course.id,
@@ -91,6 +92,7 @@ async def read_course(
         "description": db_course.description,
         "user_id": db_course.user_id,
         "created_at": db_course.created_at,
+        "creator": creator,
         "sections": [
             {
                 "id": section.id,

@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from enum import Enum
 
@@ -30,22 +30,7 @@ class TeacherInfo(BaseModel):
     email: str
     profile_name: Optional[str] = None
     
-    class Config:
-        orm_mode = True
-
-    @classmethod
-    def from_orm(cls, obj):
-        profile_name = None
-        if obj.profile:
-            first_name = obj.profile.first_name or ""
-            last_name = obj.profile.last_name or ""
-            profile_name = f"{first_name} {last_name}".strip()
-        
-        return cls(
-            id=obj.id,
-            email=obj.email,
-            profile_name=profile_name or None
-        )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourseResponse(CoursesBase):
@@ -55,8 +40,7 @@ class CourseResponse(CoursesBase):
     creator: Optional[TeacherInfo] = None
     enrolled_students_count: int = 0
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StudentEnrollmentResponse(BaseModel):
@@ -68,8 +52,7 @@ class StudentEnrollmentResponse(BaseModel):
     approved_at: Optional[datetime]
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EnrollmentApprovalRequest(BaseModel):
@@ -78,7 +61,6 @@ class EnrollmentApprovalRequest(BaseModel):
 
 
 class StudentCourseInfoResponse(BaseModel):
-    """For student dashboard"""
     id: int
     title: str
     description: Optional[str]
@@ -89,12 +71,10 @@ class StudentCourseInfoResponse(BaseModel):
     teacher_name: Optional[str] = None
     teacher_email: Optional[str] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ContentResponse(BaseModel):
-    """Content within a section"""
     id: int
     title: str
     description: Optional[str]
@@ -102,22 +82,18 @@ class ContentResponse(BaseModel):
     content_type_id: int
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SectionResponse(BaseModel):
-    """Section with nested contents"""
     id: int
     title: str
     contents: List[ContentResponse] = []
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AssignmentResponse(BaseModel):
-    """Assignment in a course"""
     id: int
     title: str
     description: Optional[str]
@@ -125,12 +101,10 @@ class AssignmentResponse(BaseModel):
     max_score: int
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SubmissionResponse(BaseModel):
-    """Student submission to assignment"""
     id: int
     assignment_id: int
     file_url: Optional[str]
@@ -140,16 +114,11 @@ class SubmissionResponse(BaseModel):
     updated_at: datetime
     student_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourseDetailResponse(CourseResponse):
-    """Full course details with sections, assignments, and enrollment info"""
     sections: List[SectionResponse] = []
     assignments: List[AssignmentResponse] = []
     is_enrolled: bool = False
     enrollment_status: Optional[EnrollmentStatusEnum] = None
-
-    class Config:
-        orm_mode = True

@@ -1,7 +1,25 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import "./globals.css";
 
 export default function Home() {
+  const router = useRouter();
+  const { isLoggedIn } = useAuth();
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      router.push("/dashboard");
+    }
+  }, [isLoggedIn, router]);
+
+  if (isLoggedIn) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-stone-50 flex items-center justify-center">
       <div className="text-center">
