@@ -9,6 +9,7 @@ alembic
 asyncpg
 python-dotenv
 pyjwt
+bcrypt==3.2.2
 passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
