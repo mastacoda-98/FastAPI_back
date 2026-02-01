@@ -29,8 +29,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:3001",
-        "https://fast-front-97nhcw9dj-gurpreets-projects-f426d6fe.vercel.app/users?q=s",
-        "https://*.vercel.app",
+        "https://*.netlify.app",  # Replace with your Netlify domain after deployment
     ],
     allow_credentials=True,
     allow_methods=["*"],
