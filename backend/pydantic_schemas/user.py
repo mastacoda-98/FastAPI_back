@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional, List
 from enum import IntEnum
 
@@ -21,8 +21,7 @@ class User(UserBase):
     updated_at: datetime
     profile_name: Optional[str] = None
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DashboardResponse(BaseModel):
@@ -46,5 +45,4 @@ class DashboardResponse(BaseModel):
     overall_completion_percentage: Optional[int] = None
     pending_requests: Optional[List[dict]] = None
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
