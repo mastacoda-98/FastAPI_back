@@ -29,7 +29,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:3001",
-        "https://fast-front-97nhcw9dj-gurpreets-projects-f426d6fe.vercel.app/users?q=s",
+        "https://fast-front-six.vercel.app/auth/login",
         "https://*.vercel.app",
     ],
     allow_credentials=True,
