@@ -32,12 +32,20 @@ export default function Login() {
       formData.append("password", password);
 
       const response = await api.post("/auth/token", formData);
+      
+      // Verify token is in response
+      if (!response.data.access_token) {
+        throw new Error("No token in response");
+      }
 
       login(response.data.access_token);
+      console.log("Login successful, token stored");
 
       toast.success("Logged in! Redirecting to dashboard...");
-      setTimeout(() => router.push("/dashboard"), 1000);
+      // Give more time for state to update
+      setTimeout(() => router.push("/dashboard"), 1500);
     } catch (error) {
+      console.error("Login error:", error);
       toast.error(error.response?.data?.detail || "Error logging in");
     } finally {
       setLoading(false);

@@ -37,6 +37,11 @@ export default function Dashboard() {
       setPendingEnrollments(response.data.pending_requests || []);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
+      toast.error(err.response?.data?.detail || "Failed to load dashboard");
+      // If 401, redirect to login
+      if (err.response?.status === 401) {
+        setTimeout(() => router.push("/auth/login"), 1500);
+      }
     } finally {
       setLoading(false);
     }
