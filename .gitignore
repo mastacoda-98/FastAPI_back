@@ -18,5 +18,44 @@ __pycache__/
 # Alembic versions (already tracked but ignore compiled files)
 alembic/versions/__pycache__/
 
-# MacOS
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Environment files
+.env.local
+.env.*.local
+*.pem
+
+# Logs
+logs/
+*.log
+
+# OS files
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+*.sublime-workspace
+*.sublime-project
+
+# AI/Claude
+claudemd
+
+# Testing
+.coverage/
+htmlcov/
+.pytest_cache/
+
+.agents

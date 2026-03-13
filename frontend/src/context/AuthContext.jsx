@@ -22,7 +22,6 @@ export function AuthProvider({ children }) {
     setIsLoggedIn(false);
   };
 
-  // Auto logout after 60 minutes
   useEffect(() => {
     if (!isLoggedIn) return;
 
@@ -30,13 +29,13 @@ export function AuthProvider({ children }) {
       const loginTime = localStorage.getItem("login_time");
       if (loginTime) {
         const elapsed = Date.now() - parseInt(loginTime);
-        const sixtyMinutes = 60 * 60 * 1000; // 60 minutes in milliseconds
+        const sixtyMinutes = 60 * 60 * 1000;
 
         if (elapsed > sixtyMinutes) {
           logout();
         }
       }
-    }, 60000); // Check every minute
+    }, 60000);
 
     return () => clearInterval(checkTimeout);
   }, [isLoggedIn]);

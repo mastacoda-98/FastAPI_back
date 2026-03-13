@@ -30,17 +30,17 @@ export default function SearchBar() {
   return (
     <form
       onSubmit={handleSearch}
-      className="flex items-center gap-3 flex-1 max-w-2xl"
+      className="flex items-center gap-2 flex-1 max-w-2xl"
     >
       <Select value={searchType} onValueChange={setSearchType}>
-        <SelectTrigger className="w-32 bg-white text-orange-400 font-semibold hover:bg-stone-50 cursor-pointer transition border-2 border-white">
+        <SelectTrigger className="w-32 bg-white text-orange-600 font-semibold hover:bg-orange-50 cursor-pointer transition-all duration-200 border border-orange-200 shadow-sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent
           side="bottom"
           align="start"
           sideOffset={8}
-          className="bg-white text-orange-400"
+          className="bg-white text-orange-600 shadow-lg"
         >
           <SelectItem value="users" className="cursor-pointer">
             Users
@@ -56,12 +56,12 @@ export default function SearchBar() {
         placeholder="Search users or courses..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="flex-1 px-4 py-2 rounded-lg text-black border-2 border-white focus:outline-none focus:ring-2 focus:ring-stone-50 focus:border-transparent transition cursor-text"
+        className="flex-1 px-4 py-2 rounded-lg text-black border border-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-500 transition-all duration-200 cursor-text bg-white/95 hover:bg-white"
       />
 
       <button
         type="submit"
-        className="bg-white text-orange-400 px-6 py-2 rounded-lg font-bold hover:bg-stone-50 active:scale-95 border-2 border-white transition duration-200 shadow-md cursor-pointer"
+        className="bg-white text-orange-600 px-6 py-2 rounded-lg font-semibold hover:bg-orange-50 active:scale-95 border border-white transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer"
       >
         Search
       </button>

@@ -78,8 +78,6 @@ export default function ProfilePage() {
         >
           ← Back to Users
         </Link>
-
-        {/* Header Card */}
         <Card className="bg-white border-0 shadow-2xl mb-8 overflow-hidden rounded-2xl">
           <div className="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 text-white py-12 px-8">
             <div className="flex items-end gap-8">
@@ -109,7 +107,7 @@ export default function ProfilePage() {
                   })}
                 </p>
               </div>
-              <div className="border-l-4 border-blue-400 pl-4">
+              <div className="border-l-4 border-orange-400 pl-4">
                 <p className="text-xs text-gray-500 uppercase tracking-widest font-bold">
                   Role
                 </p>
@@ -117,7 +115,7 @@ export default function ProfilePage() {
                   {user.role === "teacher" ? "Instructor" : "Learner"}
                 </p>
               </div>
-              <div className="border-l-4 border-green-400 pl-4">
+              <div className="border-l-4 border-orange-400 pl-4">
                 <p className="text-xs text-gray-500 uppercase tracking-widest font-bold">
                   Status
                 </p>
@@ -145,14 +143,14 @@ export default function ProfilePage() {
         {/* Student Stats Card */}
         {user.role === "student" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg rounded-2xl">
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-0 shadow-lg rounded-2xl">
               <CardContent className="pt-8">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-blue-600 uppercase tracking-widest font-bold">
+                    <p className="text-sm text-orange-600 uppercase tracking-widest font-bold">
                       Enrolled Courses
                     </p>
-                    <p className="text-5xl font-bold text-blue-700 mt-3">
+                    <p className="text-5xl font-bold text-orange-700 mt-3">
                       {user.total_courses_enrolled || 0}
                     </p>
                   </div>
@@ -161,14 +159,14 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-lg rounded-2xl">
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-0 shadow-lg rounded-2xl">
               <CardContent className="pt-8">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-purple-600 uppercase tracking-widest font-bold">
+                    <p className="text-sm text-orange-600 uppercase tracking-widest font-bold">
                       Completed Courses
                     </p>
-                    <p className="text-5xl font-bold text-purple-700 mt-3">
+                    <p className="text-5xl font-bold text-orange-700 mt-3">
                       {user.total_courses_completed || 0}
                     </p>
                   </div>
@@ -182,14 +180,14 @@ export default function ProfilePage() {
         {/* Teacher Stats Card */}
         {user.role === "teacher" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-0 shadow-lg rounded-2xl">
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-0 shadow-lg rounded-2xl">
               <CardContent className="pt-8">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-amber-600 uppercase tracking-widest font-bold">
+                    <p className="text-sm text-orange-600 uppercase tracking-widest font-bold">
                       Courses Created
                     </p>
-                    <p className="text-5xl font-bold text-amber-700 mt-3">
+                    <p className="text-5xl font-bold text-orange-700 mt-3">
                       {user.courses_created?.length || 0}
                     </p>
                   </div>
@@ -198,14 +196,14 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-pink-50 to-pink-100 border-0 shadow-lg rounded-2xl">
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-0 shadow-lg rounded-2xl">
               <CardContent className="pt-8">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-pink-600 uppercase tracking-widest font-bold">
+                    <p className="text-sm text-orange-600 uppercase tracking-widest font-bold">
                       Total Students
                     </p>
-                    <p className="text-5xl font-bold text-pink-700 mt-3">
+                    <p className="text-5xl font-bold text-orange-700 mt-3">
                       {user.total_students_enrolled || 0}
                     </p>
                   </div>

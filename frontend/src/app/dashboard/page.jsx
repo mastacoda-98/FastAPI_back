@@ -4,13 +4,17 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { GridSkeleton } from "@/components/ui/LoadingSkeleton";
+import { CourseCard } from "@/components/CourseCard";
+import { BookOpen } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "react-toastify";
 
 export default function Dashboard() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  const [mounted, setMounted] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [pendingEnrollments, setPendingEnrollments] = useState([]);
@@ -18,14 +22,10 @@ export default function Dashboard() {
   const [approving, setApproving] = useState({});
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted && isLoggedIn) {
+    if (isLoggedIn) {
       fetchDashboardData();
     }
-  }, [mounted, isLoggedIn]);
+  }, [isLoggedIn]);
 
   const fetchDashboardData = async () => {
     try {
@@ -78,24 +78,19 @@ export default function Dashboard() {
     }
   };
 
-  if (!mounted) {
-    return null;
-  }
-
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Dashboard</h1>
-          <p className="text-gray-600 mb-6 text-lg">
-            Please login to view your dashboard
-          </p>
-          <Link
-            href="/auth/login"
-            className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-8 rounded-lg transition"
-          >
-            Login
-          </Link>
+      <div className="min-h-screen bg-stone-50 py-8 px-4 pt-24">
+        <div className="flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold mb-4">Dashboard</h1>
+            <p className="text-gray-600 mb-6 text-lg">
+              Please login to view your dashboard
+            </p>
+            <Link href="/auth/login">
+              <Button size="lg">Login</Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -103,9 +98,10 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 py-8">
+      <div className="min-h-screen bg-stone-50 py-8 pt-24">
         <div className="max-w-6xl mx-auto px-4">
-          <p className="text-center text-gray-600">Loading dashboard...</p>
+          <h1 className="text-4xl font-bold mb-8">Dashboard</h1>
+          <GridSkeleton count={3} />
         </div>
       </div>
     );
@@ -113,7 +109,7 @@ export default function Dashboard() {
 
   if (currentUser?.role === "student") {
     return (
-      <div className="min-h-screen bg-stone-50 py-8">
+      <div className="min-h-screen bg-stone-50 py-8 pt-24">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-4xl font-bold mb-8">Student Dashboard</h1>
 
@@ -125,34 +121,25 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {enrolledCourses.length > 0 ? (
-                enrolledCourses.map((course) => (
-                  <Link
-                    key={course.id}
-                    href={`/courses/${course.course_id}`}
-                    className="bg-white rounded-lg shadow hover:shadow-lg transition border-2 border-gray-200 p-4"
-                  >
-                    <h3 className="font-bold text-lg text-black mb-2">
-                      {course.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm">
-                      {course.description}
-                    </p>
-                  </Link>
-                ))
-              ) : (
-                <div className="col-span-full bg-white rounded-lg p-8 text-center text-gray-600">
-                  <p>You havent enrolled in any courses yet</p>
-                  <Link
-                    href="/courses"
-                    className="text-orange-600 hover:text-orange-700 font-semibold mt-2 inline-block"
-                  >
-                    Browse Courses →
-                  </Link>
-                </div>
-              )}
-            </div>
+            {enrolledCourses.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {enrolledCourses.map((course, index) => (
+                  <CourseCard
+                    key={`enrolled-${course.course_id}-${index}`}
+                    course={course}
+                    variant="dashboard"
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No courses yet"
+                description="Start learning by browsing available courses"
+                actionText="Browse Courses"
+                actionHref="/courses"
+                icon={BookOpen}
+              />
+            )}
           </div>
 
           <div className="mb-8">
@@ -163,28 +150,42 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-8">
+            <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-yellow-500">
               {pendingEnrollments.length > 0 ? (
                 <div className="space-y-3">
-                  {pendingEnrollments.map((enrollment) => (
-                    <Link
-                      key={enrollment.course_id}
-                      href={`/courses/${enrollment.course_id}`}
-                      className="block bg-stone-50 rounded-lg hover:bg-stone-100 transition border-2 border-yellow-200 p-4"
+                  {pendingEnrollments.map((enrollment, index) => (
+                    <div
+                      key={`pending-${enrollment.course_id}-${index}`}
+                      className="bg-yellow-50 rounded-lg p-4 border border-yellow-200 hover:border-yellow-400 hover:shadow-md transition"
                     >
-                      <h3 className="font-bold text-lg text-black mb-1">
-                        {enrollment.course_title}
-                      </h3>
-                      <p className="text-gray-600 text-sm">
-                        Requested on{" "}
-                        {new Date(enrollment.requested_at).toLocaleDateString()}
-                      </p>
-                    </Link>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-bold text-lg text-black mb-1">
+                            {enrollment.course_title}
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            Requested on{" "}
+                            {new Date(
+                              enrollment.requested_at,
+                            ).toLocaleDateString()}
+                          </p>
+                          <p className="text-yellow-700 text-xs font-semibold mt-1">
+                            Status: Awaiting Approval
+                          </p>
+                        </div>
+                        <Link
+                          href={`/courses/${enrollment.course_id}`}
+                          className="text-orange-600 hover:text-orange-700 font-semibold transition"
+                        >
+                          View →
+                        </Link>
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-600 text-center">
-                  No pending enrollment requests
+                <p className="text-gray-600 text-center py-4">
+                  No pending enrollment requests. Keep learning!
                 </p>
               )}
             </div>
@@ -196,7 +197,7 @@ export default function Dashboard() {
 
   if (currentUser?.role === "teacher") {
     return (
-      <div className="min-h-screen bg-stone-50 py-8">
+      <div className="min-h-screen bg-stone-50 py-8 pt-24">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-4xl font-bold mb-8">Teacher Dashboard</h1>
 
@@ -204,51 +205,35 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">My Courses</h2>
               <div className="flex items-center gap-4">
-                <div className="bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg">
-                  {currentUser.courses_created?.length || 0} Created
+                <div className="text-sm text-gray-600">
+                  {currentUser.courses_created?.length || 0} courses
                 </div>
-                <Link
-                  href="/courses/create"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition"
-                >
-                  + Create Course
+                <Link href="/courses/create">
+                  <Button>+ Create Course</Button>
                 </Link>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {currentUser.courses_created &&
-              currentUser.courses_created.length > 0 ? (
-                currentUser.courses_created.map((course) => (
-                  <Link
+            {currentUser.courses_created &&
+            currentUser.courses_created.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {currentUser.courses_created.map((course) => (
+                  <CourseCard
                     key={course.id}
-                    href={`/courses/${course.id}`}
-                    className="bg-white rounded-lg shadow hover:shadow-lg transition border-2 border-blue-200 p-4"
-                  >
-                    <h3 className="font-bold text-lg text-black mb-2">
-                      {course.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-3">
-                      {course.description}
-                    </p>
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>{course.total_students || 0} Students</span>
-                      <span>{course.sections_count || 0} Sections</span>
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="col-span-full bg-white rounded-lg p-8 text-center text-gray-600">
-                  <p>You havent created any courses yet</p>
-                  <Link
-                    href="/courses/create"
-                    className="text-blue-600 hover:text-blue-700 font-semibold mt-2 inline-block"
-                  >
-                    Create New Course →
-                  </Link>
-                </div>
-              )}
-            </div>
+                    course={course}
+                    variant="dashboard"
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No courses yet"
+                description="Create your first course to get started"
+                actionText="Create Course"
+                actionHref="/courses/create"
+                icon={BookOpen}
+              />
+            )}
           </div>
 
           <div className="mb-8">
@@ -285,28 +270,30 @@ export default function Dashboard() {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <button
+                        <Button
+                          variant="success"
+                          size="sm"
                           onClick={() =>
                             handleApproveEnrollment(request.enrollment_id)
                           }
                           disabled={approving[request.enrollment_id]}
-                          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition disabled:bg-gray-400"
                         >
                           {approving[request.enrollment_id]
                             ? "Processing..."
                             : "Approve"}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
                           onClick={() =>
                             handleRejectEnrollment(request.enrollment_id)
                           }
                           disabled={approving[request.enrollment_id]}
-                          className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded transition disabled:bg-gray-400"
                         >
                           {approving[request.enrollment_id]
                             ? "Processing..."
                             : "Reject"}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ))}

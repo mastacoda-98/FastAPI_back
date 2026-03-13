@@ -4,52 +4,52 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import api from "@/lib/api";
+import { ChevronLeft, BookOpen, Users, FileText } from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function CourseDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const courseId = params.id;
   const { isLoggedIn } = useAuth();
+  const courseId = params.id;
+
   const [course, setCourse] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
   const [enrolling, setEnrolling] = useState(false);
 
   useEffect(() => {
-    const fetchCourse = async () => {
+    const fetchCourseDetail = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/courses/${courseId}`);
-        setCourse(response.data);
+        const [courseResponse, userResponse] = await Promise.all([
+          api.get(`/courses/${courseId}`),
+          isLoggedIn ? api.get(`/auth/me`) : Promise.resolve(null),
+        ]);
+        setCourse(courseResponse.data);
+        if (userResponse) {
+          setCurrentUser(userResponse.data);
+        }
+        setError(null);
       } catch (err) {
-        console.error("Error fetching course:", err);
+        console.error("Error fetching course detail:", err);
         setError("Failed to load course details");
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchCurrentUser = async () => {
-      if (isLoggedIn) {
-        try {
-          const response = await api.get("/auth/me");
-          setCurrentUser(response.data);
-        } catch (err) {
-          console.error("Error fetching current user:", err);
-        }
-      }
-    };
-
     if (courseId) {
-      fetchCourse();
-      fetchCurrentUser();
+      fetchCourseDetail();
     }
   }, [courseId, isLoggedIn]);
 
   const handleEnroll = async () => {
-    if (!isLoggedIn) {
+    if (!isLoggedIn || !currentUser) {
       router.push("/auth/login");
       return;
     }
@@ -57,79 +57,25 @@ export default function CourseDetailPage() {
     try {
       setEnrolling(true);
       await api.post(`/courses/course/${courseId}/request-enrollment`);
-      const response = await api.get(`/courses/${courseId}`);
-      console.log("Course response after enrollment:", response.data);
-      setCourse(response.data);
       alert("Enrollment request submitted successfully!");
+      // Refresh course data
+      const response = await api.get(`/courses/${courseId}`);
+      setCourse(response.data);
     } catch (err) {
-      console.error("Error enrolling:", err);
-      console.error("Error response:", err.response?.data);
-      alert(
-        err.response?.data?.detail || "Failed to submit enrollment request",
-      );
+      console.error("Error enrolling in course:", err);
+      alert(err.response?.data?.detail || "Failed to enroll in course");
     } finally {
       setEnrolling(false);
     }
   };
 
-  const getEnrollmentButton = () => {
-    if (isLoggedIn && currentUser && currentUser.role === "teacher") {
-      return null;
-    }
-
-    if (!isLoggedIn) {
-      return (
-        <button
-          onClick={handleEnroll}
-          className="w-full bg-gradient-to-r from-orange-400 to-orange-500 text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all duration-300"
-        >
-          Login to Enroll
-        </button>
-      );
-    }
-
-    if (course?.is_enrolled) {
-      if (course?.enrollment_status === "approved") {
-        return (
-          <div className="w-full bg-gradient-to-r from-green-400 to-green-500 text-white font-bold py-3 rounded-lg text-center">
-            ✓ Approved
-          </div>
-        );
-      } else if (course?.enrollment_status === "pending") {
-        return (
-          <div className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-bold py-3 rounded-lg text-center">
-            ⏳ Pending Approval
-          </div>
-        );
-      } else if (course?.enrollment_status === "rejected") {
-        return (
-          <button
-            onClick={handleEnroll}
-            disabled={enrolling}
-            className="w-full bg-gradient-to-r from-red-400 to-red-500 text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {enrolling ? "Re-applying..." : "Re-apply"}
-          </button>
-        );
-      }
-    }
-
-    return (
-      <button
-        onClick={handleEnroll}
-        disabled={enrolling}
-        className="w-full bg-gradient-to-r from-orange-400 to-orange-500 text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {enrolling ? "Submitting..." : "Enroll Now"}
-      </button>
-    );
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 py-8">
+      <div className="min-h-screen bg-stone-50 py-8 pt-24">
         <div className="max-w-4xl mx-auto px-4">
-          <p className="text-center text-gray-600">Loading course details...</p>
+          <div className="text-center py-12">
+            <p className="text-gray-600">Loading course details...</p>
+          </div>
         </div>
       </div>
     );
@@ -137,15 +83,14 @@ export default function CourseDetailPage() {
 
   if (error || !course) {
     return (
-      <div className="min-h-screen bg-stone-50 py-8">
+      <div className="min-h-screen bg-stone-50 py-8 pt-24">
         <div className="max-w-4xl mx-auto px-4">
-          <div className="text-center">
-            <p className="text-gray-600 mb-4">{error || "Course not found"}</p>
-            <Link
-              href="/courses"
-              className="text-orange-600 hover:text-orange-700"
-            >
-              Back to Courses
+          <div className="text-center py-12">
+            <p className="text-red-600 text-lg mb-6">
+              {error || "Course not found"}
+            </p>
+            <Link href="/courses">
+              <Button>Back to Courses</Button>
             </Link>
           </div>
         </div>
@@ -154,125 +99,203 @@ export default function CourseDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 py-8">
+    <div className="min-h-screen bg-stone-50 py-8 pt-24">
       <div className="max-w-4xl mx-auto px-4">
+        {/* Back Button */}
         <Link
           href="/courses"
-          className="text-orange-600 hover:text-orange-700 mb-6 inline-block"
+          className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-semibold mb-6 transition"
         >
-          ← Back to Courses
+          <ChevronLeft size={20} />
+          Back to Courses
         </Link>
 
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden border-2 border-orange-400">
-          <div className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-8">
-            <div className="flex justify-between items-start gap-6">
-              <h1 className="text-4xl font-bold flex-1">{course.title}</h1>
-              {course.creator && (
-                <Link
-                  href={`/profile/${course.creator.id}`}
-                  className="hover:opacity-90 transition-opacity"
-                >
-                  <div className="flex items-center gap-3 bg-orange-300 bg-opacity-30 px-4 py-2 rounded-lg whitespace-nowrap">
-                    <div className="w-10 h-10 rounded-full bg-white bg-opacity-30 flex items-center justify-center font-bold">
-                      {course.creator.profile_name
-                        ? course.creator.profile_name.charAt(0).toUpperCase()
-                        : "T"}
-                    </div>
-                    <div>
-                      <p className="text-xs opacity-75">Instructor</p>
-                      <p className="font-semibold">
-                        {course.creator.profile_name || course.creator.email}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <div className="p-8 space-y-6">
-            {course.description && (
-              <div>
-                <h2 className="text-2xl font-bold text-black mb-2">
-                  About this course
-                </h2>
-                <p className="text-gray-700">{course.description}</p>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4 py-4 border-t border-b border-gray-200">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-orange-600">
-                  {course.enrolled_students_count || 0}
+        {/* Course Header */}
+        <Card className="bg-white border border-gray-200 overflow-hidden mb-6">
+          <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white pb-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <CardTitle className="text-4xl mb-2">{course.title}</CardTitle>
+                <p className="text-orange-100">
+                  {course.creator?.profile_name ||
+                    `Instructor ID: ${course.user_id}`}
                 </p>
-                <p className="text-gray-600 text-sm">Students Enrolled</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-orange-600">
+              <div className="w-16 h-16 rounded-full bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-2xl">
+                  {course.title.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-6">
+            {/* Description */}
+            <div>
+              <h3 className="text-lg font-bold text-black mb-2">
+                About this Course
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                {course.description || "No description available"}
+              </p>
+            </div>
+
+            {/* Course Stats */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <Users size={18} className="text-orange-600" />
+                  <span className="text-sm text-gray-600">Students</span>
+                </div>
+                <p className="text-2xl font-bold text-black">
+                  {course.total_students || 0}
+                </p>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <BookOpen size={18} className="text-orange-600" />
+                  <span className="text-sm text-gray-600">Sections</span>
+                </div>
+                <p className="text-2xl font-bold text-black">
                   {course.sections?.length || 0}
                 </p>
-                <p className="text-gray-600 text-sm">Sections</p>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <FileText size={18} className="text-orange-600" />
+                  <span className="text-sm text-gray-600">Assignments</span>
+                </div>
+                <p className="text-2xl font-bold text-black">
+                  {course.assignments?.length || 0}
+                </p>
               </div>
             </div>
 
-            {course.sections && course.sections.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-bold text-black mb-4">
-                  Course Content
-                </h2>
-                <div className="space-y-3">
-                  {course.sections.map((section) => (
-                    <div
-                      key={section.id}
-                      className="bg-stone-50 p-4 rounded-lg border border-gray-200"
-                    >
-                      <h3 className="font-semibold text-lg text-black mb-2">
-                        {section.title}
-                      </h3>
-                      {section.contents && section.contents.length > 0 && (
-                        <ul className="space-y-2 ml-4">
-                          {section.contents.map((content) => (
-                            <li
-                              key={content.id}
-                              className="text-gray-700 text-sm"
-                            >
-                              • {content.title}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {course.assignments && course.assignments.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-bold text-black mb-4">
-                  Assignments
-                </h2>
-                <div className="space-y-3">
-                  {course.assignments.map((assignment) => (
-                    <div
-                      key={assignment.id}
-                      className="bg-stone-50 p-4 rounded-lg border border-gray-200"
-                    >
-                      <h3 className="font-semibold text-black">
-                        {assignment.title}
-                      </h3>
-                      <p className="text-gray-600 text-sm mt-1">
-                        {assignment.description}
+            {/* Enrollment Status & Action */}
+            {currentUser && currentUser.id !== course.user_id ? (
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 flex items-center justify-between">
+                <div>
+                  {course.is_enrolled ? (
+                    <div>
+                      <p className="text-sm text-gray-600">You are enrolled</p>
+                      <p className="text-green-600 font-semibold capitalize">
+                        Status: {course.enrollment_status || "Active"}
                       </p>
                     </div>
-                  ))}
+                  ) : (
+                    <p className="text-gray-600">Not enrolled yet</p>
+                  )}
                 </div>
+                {!course.is_enrolled && (
+                  <Button onClick={handleEnroll} disabled={enrolling}>
+                    {enrolling ? "Enrolling..." : "Request Enrollment"}
+                  </Button>
+                )}
               </div>
-            )}
+            ) : null}
+          </CardContent>
+        </Card>
 
-            {getEnrollmentButton()}
+        {/* Sections */}
+        {course.sections && course.sections.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-black mb-4">
+              Course Content
+            </h2>
+            <div className="space-y-4">
+              {course.sections.map((section, idx) => (
+                <Card
+                  key={section.id}
+                  className="bg-white border border-gray-200 hover:border-orange-400 hover:shadow-md transition"
+                >
+                  <CardHeader className="bg-gray-50 border-b">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-sm">
+                        {idx + 1}
+                      </div>
+                      <CardTitle className="text-lg text-black">
+                        {section.title}
+                      </CardTitle>
+                      <span className="ml-auto text-sm text-gray-600">
+                        {section.contents?.length || 0} items
+                      </span>
+                    </div>
+                  </CardHeader>
+                  {section.contents && section.contents.length > 0 && (
+                    <CardContent className="pt-4">
+                      <ul className="space-y-2">
+                        {section.contents.map((content) => (
+                          <li
+                            key={content.id}
+                            className="flex items-start gap-3 p-2 rounded hover:bg-gray-50 transition"
+                          >
+                            <div className="w-2 h-2 rounded-full bg-orange-400 mt-2 flex-shrink-0"></div>
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800">
+                                {content.title}
+                              </p>
+                              {content.description && (
+                                <p className="text-sm text-gray-600">
+                                  {content.description}
+                                </p>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Assignments */}
+        {course.assignments && course.assignments.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-black mb-4">Assignments</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {course.assignments.map((assignment) => (
+                <Card
+                  key={assignment.id}
+                  className="bg-white border border-gray-200"
+                >
+                  <CardHeader className="border-b">
+                    <CardTitle className="text-lg text-black">
+                      {assignment.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-2">
+                    {assignment.description && (
+                      <p className="text-gray-600 text-sm">
+                        {assignment.description}
+                      </p>
+                    )}
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Max Score: {assignment.max_score || "N/A"}</span>
+                      {assignment.due_date && (
+                        <span>
+                          Due:{" "}
+                          {new Date(assignment.due_date).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty States */}
+        {(!course.sections || course.sections.length === 0) &&
+          (!course.assignments || course.assignments.length === 0) && (
+            <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+              <p className="text-gray-600 text-lg">
+                No content available yet for this course
+              </p>
+            </div>
+          )}
       </div>
     </div>
   );
