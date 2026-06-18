@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, status
 
 from pydantic_schemas.course import CourseCreate, CourseResponse, EnrollmentApprovalRequest, CourseDetailResponse
 from auth.dependencies import get_teacher_user, get_student_user, get_current_user_optional
-from api.utils.course import get_courses, create_course, get_course, get_course_with_details, check_enrollment
+from api.utils.course import delete_course, get_courses, create_course, get_course, get_course_with_details, check_enrollment, search_courses
 from api.utils.user import request_enrollment_util, approve_enrollment_util
 from db.models.course import Course, StudentCourse
 from db.models.user import User
@@ -26,6 +26,16 @@ async def create_course_teacher(
     return db_course
 
 
+@router.delete("/{course_id}/delete", tags=["teacher"])
+async def delete_course_teacher(
+    course_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    teacher = Depends(get_teacher_user)
+):
+    return await delete_course(db, course_id, teacher.id)
+
+
+
 @router.patch("/enrollment/{enrollment_id}/approve", tags=["teacher"])
 async def approve_enrollment(
     enrollment_id: int,
@@ -34,15 +44,35 @@ async def approve_enrollment(
     teacher = Depends(get_teacher_user)
 ):
     """Teacher approves or rejects a student enrollment request"""
-    enrollment, message = await approve_enrollment_util(db, teacher.id, enrollment_id, request.approved, request.rejected_reason)
+    enrollment, message = await approve_enrollment_util(db, teacher.id, enrollment_id, request.approved, request.rejected_reason) # type: ignore
     return {"message": message, "enrollment": enrollment}
 
 
 # =============== STUDENT ENDPOINTS ===============
 
 @router.get("", response_model=List[CourseResponse], tags=["public"])
-async def read_all_courses(db: AsyncSession = Depends(get_async_db)):
+async def read_all_courses(
+    q: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+    min_similarity: float = 0.15,
+    teacher_id: Optional[int] = None,
+    sort: str = "relevance",
+    db: AsyncSession = Depends(get_async_db),
+):
     """View all available courses"""
+    if q or teacher_id is not None or sort != "relevance" or skip != 0 or limit != 100:
+        courses = await search_courses(
+            db=db,
+            q=q,
+            skip=skip,
+            limit=limit,
+            min_similarity=min_similarity,
+            teacher_id=teacher_id,
+            sort=sort,
+        )
+        return courses
+
     courses = await get_courses(db)
     return courses
 
@@ -67,7 +97,7 @@ async def read_course(
     enrollment_status = None
     
     if current_user:
-        enrollment = await check_enrollment(db, current_user.id, id)
+        enrollment = await check_enrollment(db, current_user.id, id) # type: ignore
         if enrollment:
             is_enrolled = True
             enrollment_status = enrollment.status.value

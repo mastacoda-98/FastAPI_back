@@ -20,23 +20,14 @@ function CoursesContent() {
     const fetchCourses = async () => {
       setLoading(true);
       try {
-        const response = await api.get("/courses?skip=0&limit=100");
-        const allCourses = response.data;
-
-        if (query.trim()) {
-          const filtered = allCourses.filter((course) => {
-            const title = course.title || "";
-            const description = course.description || "";
-            const searchLower = query.toLowerCase();
-            return (
-              title.toLowerCase().includes(searchLower) ||
-              description.toLowerCase().includes(searchLower)
-            );
-          });
-          setCourses(filtered);
-        } else {
-          setCourses(allCourses);
-        }
+        const response = await api.get("/courses", {
+          params: {
+            q: query.trim() || undefined,
+            skip: 0,
+            limit: 100,
+          },
+        });
+        setCourses(response.data);
       } catch (error) {
         console.error("Error fetching courses:", error);
         setCourses([]);

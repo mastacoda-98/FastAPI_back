@@ -12,10 +12,8 @@ const api = axios.create({
   baseURL: getApiUrl(),
 });
 
-// Add request interceptor to include JWT token
 api.interceptors.request.use(
   (config) => {
-    // Only run on client side
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("token");
       if (token) {
@@ -35,13 +33,11 @@ api.interceptors.request.use(
   },
 );
 
-// Add response interceptor to handle 401 errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.error("401 Unauthorized:", error.response.data);
-      // Clear token on 401
+      console.error("401 Unauthorized:", error.response.data);s
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
         localStorage.removeItem("login_time");

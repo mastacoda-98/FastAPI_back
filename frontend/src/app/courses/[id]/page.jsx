@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import api from "@/lib/api";
-import { ChevronLeft, BookOpen, Users, FileText } from "lucide-react";
+import { ChevronLeft, BookOpen, Users, FileText, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 
 export default function CourseDetailPage() {
@@ -21,6 +21,8 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [enrolling, setEnrolling] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [owner, setOwner] = useState(false);
 
   useEffect(() => {
     const fetchCourseDetail = async () => {
@@ -33,6 +35,13 @@ export default function CourseDetailPage() {
         setCourse(courseResponse.data);
         if (userResponse) {
           setCurrentUser(userResponse.data);
+        }
+        if (
+          userResponse &&
+          userResponse.data.role === "teacher" &&
+          userResponse.data.id === courseResponse.data.user_id
+        ) {
+          setOwner(true);
         }
         setError(null);
       } catch (err) {
@@ -58,7 +67,6 @@ export default function CourseDetailPage() {
       setEnrolling(true);
       await api.post(`/courses/course/${courseId}/request-enrollment`);
       alert("Enrollment request submitted successfully!");
-      // Refresh course data
       const response = await api.get(`/courses/${courseId}`);
       setCourse(response.data);
     } catch (err) {
@@ -66,6 +74,34 @@ export default function CourseDetailPage() {
       alert(err.response?.data?.detail || "Failed to enroll in course");
     } finally {
       setEnrolling(false);
+    }
+  };
+
+  const handleDeleteCourse = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this course? This action cannot be undone.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      const response = await api.delete(`/courses/${courseId}/delete`);
+
+      if (response.data === true) {
+        toast.success("Course deleted successfully!");
+        router.push("/dashboard");
+        return;
+      }
+
+      toast.error("Could not delete this course");
+    } catch (err) {
+      console.error("Error deleting course:", err);
+      toast.error(err.response?.data?.detail || "Failed to delete course");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -113,7 +149,7 @@ export default function CourseDetailPage() {
         {/* Course Header */}
         <Card className="bg-white border border-gray-200 overflow-hidden mb-6">
           <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white pb-6">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <CardTitle className="text-4xl mb-2">{course.title}</CardTitle>
                 <p className="text-orange-100">
@@ -121,10 +157,30 @@ export default function CourseDetailPage() {
                     `Instructor ID: ${course.user_id}`}
                 </p>
               </div>
-              <div className="w-16 h-16 rounded-full bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-2xl">
-                  {course.title.charAt(0).toUpperCase()}
-                </span>
+              <div className="flex flex-shrink-0 items-center gap-3">
+                {owner && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteCourse}
+                    disabled={deleting}
+                    title="Delete course"
+                    aria-label="Delete course"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white shadow-sm backdrop-blur-sm transition hover:border-white/60 hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/80 focus:ring-offset-2 focus:ring-offset-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Trash2
+                      size={18}
+                      className={deleting ? "animate-pulse" : ""}
+                    />
+                    <span className="sr-only">
+                      {deleting ? "Deleting course" : "Delete course"}
+                    </span>
+                  </button>
+                )}
+                <div className="w-16 h-16 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                  <span className="text-white font-bold text-2xl">
+                    {course.title.charAt(0).toUpperCase()}
+                  </span>
+                </div>
               </div>
             </div>
           </CardHeader>
